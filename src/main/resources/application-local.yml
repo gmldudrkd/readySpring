@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: hello-spring
+external-server:
+  seoul-metro:
+    api:
+      base-url: "http://openapi.seoul.go.kr:8088/"
+      access-key: "44616a6f47676d6c36396a7264634e"
+      connect-timeout: 5000
+      read-timeout: 5000
