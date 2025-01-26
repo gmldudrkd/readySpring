@@ -3,7 +3,7 @@ POST {{api-url}}/api/v1/metro/stations
 Content-Type: application/json
 
 {
-  "startPage": 3,
+  "startPage": 0,
   "endPage": 5,
   "stationName": "2"
 }

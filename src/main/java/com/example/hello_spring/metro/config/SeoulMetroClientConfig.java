@@ -1,7 +1,8 @@
 package com.example.hello_spring.metro.config;
 
+import com.example.hello_spring.global.enums.ErrorCode;
+import com.example.hello_spring.global.exception.ExternalInterfaceException;
 import com.example.hello_spring.metro.client.SeoulMetroInterfaceClient;
-import com.example.hello_spring.metro.exception.MetroApiException;
 import java.net.http.HttpClient;
 import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,9 @@ public class SeoulMetroClientConfig {
             .defaultHeaders(headers -> headers.setContentType(MediaType.APPLICATION_XML))
             .defaultStatusHandler(HttpStatusCode::isError,
                 (request, response) ->{
-                    throw new MetroApiException(response.getBody().toString());
+                    throw ExternalInterfaceException.of(
+                        ErrorCode.SEOUL_METRO_API_CALL_FAIL, response.getBody().toString()
+                    );
                 })
             .build();
     }

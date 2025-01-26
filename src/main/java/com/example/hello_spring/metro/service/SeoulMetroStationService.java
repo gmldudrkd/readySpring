@@ -1,19 +1,22 @@
 package com.example.hello_spring.metro.service;
 
+import com.example.hello_spring.global.enums.ErrorCode;
+import com.example.hello_spring.global.exception.ExternalInterfaceException;
 import com.example.hello_spring.metro.client.SeoulMetroInterfaceClient;
 import com.example.hello_spring.metro.dto.SeoulMetroStationApiErrorResponse;
 import com.example.hello_spring.metro.dto.SeoulMetroStationApiRequest;
 import com.example.hello_spring.metro.dto.SeoulMetroStationApiResponse;
 import com.example.hello_spring.metro.dto.SeoulMetroStationApiResponse.SeoulMetroStationInfo;
 import com.example.hello_spring.metro.dto.SeoulMetroStationList;
-import com.example.hello_spring.metro.exception.SeoulMetroGetStationServiceException;
 import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,8 +36,8 @@ public class SeoulMetroStationService {
 
             SeoulMetroStationApiResponse response = parseSuccessResponse(xmlResponse);
             return convertToStationList(response);
-        }catch (Exception e){
-            throw new SeoulMetroGetStationServiceException(e.getMessage());
+        }catch (ExternalInterfaceException e){
+            throw ExternalInterfaceException.of(e.getErrorCode(), e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -44,13 +47,15 @@ public class SeoulMetroStationService {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             return (SeoulMetroStationApiResponse) unmarshaller.unmarshal(new StringReader(xmlResponse));
         } catch (Exception e) {
-            throw new SeoulMetroGetStationServiceException("Failed to parse success response: " + e.getMessage());
+            throw ExternalInterfaceException.of(ErrorCode.SEOUL_METRO_RESPONSE_FAIL,
+                "Failed to parse success response: " + e.getMessage()
+            );
         }
     }
 
     private static void validationResponse(String xmlResponse) {
         if (xmlResponse == null) {
-            throw new SeoulMetroGetStationServiceException("API response is null");
+            throw ExternalInterfaceException.of(ErrorCode.SEOUL_METRO_RESPONSE_FAIL, "API response is null");
         }
     }
 
@@ -61,17 +66,20 @@ public class SeoulMetroStationService {
     private void handleErrorResponse(String xmlResponse) {
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(SeoulMetroStationApiErrorResponse.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            SeoulMetroStationApiErrorResponse errorResponse =
-                (SeoulMetroStationApiErrorResponse) unmarshaller.unmarshal(new StringReader(xmlResponse));
 
-            throw new SeoulMetroGetStationServiceException(
-                String.format("API Error - Code: %s, Message: %s",
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                SeoulMetroStationApiErrorResponse errorResponse =
+                    (SeoulMetroStationApiErrorResponse) unmarshaller.unmarshal(new StringReader(xmlResponse));
+
+            throw ExternalInterfaceException.of(ErrorCode.SEOUL_METRO_RESPONSE_FAIL,
+                String.format("Error Code: %s, Message: %s",
                     errorResponse.getErrorCode(),
                     errorResponse.getErrorMessage())
             );
-        } catch (Exception e) {
-            throw new SeoulMetroGetStationServiceException("Failed to parse error response: " + e.getMessage());
+        } catch (JAXBException e) {
+            throw ExternalInterfaceException.of(ErrorCode.SEOUL_METRO_RESPONSE_FAIL,
+                "JAXBException error: " + e.getMessage()
+            );
         }
     }
 
