@@ -19,12 +19,11 @@ public class SeoulMetroController {
     private final SeoulMetroStationService seoulMetroStationService;
 
     @PostMapping(value = "/stations")
-    public ResponseEntity<List<SeoulMetroStationList>> getStationsByName(
+    public ResponseEntity<List<SeoulMetroStationList>> getStationsByNameV2(
         @RequestBody SeoulMetroStationApiRequest request
     ) {
         //지하철 역 정보 조회
-        List<SeoulMetroStationList> result = seoulMetroStationService
-            .getSeoulMetroStationByLineNumber(request);
+        List<SeoulMetroStationList> result = seoulMetroStationService.getSeoulMetroStationByLineNumberV2(request);
 
         return ResponseEntity.ok(result);
     }
